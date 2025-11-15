@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/output.css')}}">
+</head>
+<body>
+    <div class="w-screen h-screen flex flex-col justify-center items-center">
+        {%with messages = get_flashed_messages()%}
+            {%for message in messages%}
+                <p>{{message}}</p>
+            {%endfor%}
+        {%endwith%}
+        <p>WELCOME TO DASHBOARD, <span class="font-bold capitalize">{{session['user']['username']}}</span>!</p>
+        <!-- <button onclick="window.location.href='/add-food'" class="underline">Add Food</button> -->
+        
+        <form action="/add-food" method="post">
+            <label for="foodname">Food Name</label>
+            <input type="text" name="foodname" class="border border-black">
+            <label for="foodprice">Food Price</label>
+            <input type="text" name="foodprice" class="border border-black">
+            <button type="submit" class="bg-blue-300 rounded-3xl p-3">Add Food</button>
+        </form>
+    </div>
+</body>
+</html>
