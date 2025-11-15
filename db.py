@@ -42,6 +42,19 @@ def get_all_foods():
         foods = conn.execute(sql).fetchall()
         foods = [dict(food) for food in foods]
         return foods
+    
+def get_food_by_Id(foodId):
+    sql = 'select * from food where foodId = ?'
+    with connect() as conn:
+        food = conn.execute(sql, (foodId)).fetchone()
+        food = dict(food)
+        return food
+
+def delete_food(foodId):
+    sql = 'delete from food where foodId = ?'
+    with connect() as conn:
+        conn.execute(sql, (foodId))
+        conn.commit()
 
 def get_all_users():
     sql = 'select * from user'
@@ -89,6 +102,13 @@ def add_food(foodname, foodprice):
         conn.execute(sql,(foodname,foodprice))
         conn.commit()
 
+def db_edit_food(foodname, foodprice, foodid):
+    sql = 'update food set foodName = ?, foodPrice = ? where foodId = ?'
+    with connect() as conn:
+        foodprice = float(foodprice)
+        conn.execute(sql, (foodname, foodprice, foodid))
+        conn.commit()
+
 def add_user(username, password):
     users = get_all_users()
     isAdmin = 0
@@ -100,7 +120,7 @@ def add_user(username, password):
         conn.commit()
 
 def login(username, password):
-    sql = 'select * from user where username = ? and password = ?'
+    sql = 'select username, isAdmin from user where username = ? and password = ?'
     with connect() as conn:
         user = conn.execute(sql,(username, password)).fetchone()
         return user
@@ -123,4 +143,6 @@ def add_purchase_list(purchaseId, items):
 if __name__ == "__main__":
     create_tables()
     # add_user('bynib', 'bynibshi')
-    print(dict(login('bynib', 'bynibshi')))
+    # print(dict(login('bynib', 'bynibshi')))
+    # print(db_edit_food('Biryani', 100, 1))
+    print(get_all_foods())
