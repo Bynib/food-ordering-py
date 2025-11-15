@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/output.css')}}">
+</head>
+<body>
+    <div class="w-screen h-screen flex flex-col justify-center items-center">
+        {%with messages = get_flashed_messages()%}
+            {%for message in messages%}
+                <p>{{message}}</p>
+            {%endfor%}
+        {%endwith%}
+        <p>LOGIN</p>
+        <div class="border-black rounded-2xl">
+            <form action="/login" method="post" class="flex flex-col gap-5">
+                <label for="username">Username</label>
+                <input type="text" name="username" value="{{username}}" class="border border-black">
+                <label for="password">Password</label>
+                <input type="password" name="password" value="{{password}}" class="border border-black">
+                <button type="submit" class="bg-blue-300 rounded-3xl p-3">Login</button>
+            </form>
+            <p>Don't have an account? <button class="bg-blue-300 px-3 rounded-xl" onclick="window.location.href='/register'">Register</button></p>
+        </div>
+    </div>
+</body>
+</html>
