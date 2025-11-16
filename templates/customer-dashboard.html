@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/output.css')}}">
+</head>
+<body>
+    <div class="w-screen h-screen flex flex-col justify-center items-center">
+        {%with messages = get_flashed_messages()%}
+            {%for message in messages%}
+                <p>{{message}}</p>
+            {%endfor%}
+        {%endwith%}
+        <p>WELCOME TO DASHBOARD, <span class="font-bold capitalize">{{session['user']['username']}}</span>!</p>
+        <!-- <button onclick="window.location.href='/add-food'" class="underline w-1/3 text-right">Add Food</button> -->
+        <div class="flex w-1/3 justify-between">
+
+            <table>
+                <tr>
+                <td class="w-1/3">Name</td>
+                <td class="w-1/3">Price</td>
+                <td class="w-1/3">Actions</td>
+            </tr>
+            {%for food in foods%}
+                <tr>
+                    <td>{{food['foodName']}}</td><td>{{food['foodPrice']}}</td>
+                    <td class="flex ">
+                        <button
+                            onclick='AddToCart({{ food["foodId"] }}, {{ food["foodName"]|tojson }}, {{ food["foodPrice"] }})'
+                            class="bg-blue-300 rounded-xl">
+                            Add to Cart
+                        </button>
+
+                    </td>
+                </tr>
+            {%endfor%}
+        </table>
+        <div class="flex flex-col">
+            <p>CART</p>
+            <form action="/add-purchase" method="post">
+                <table id="cart_table"></table>
+                <input type="hidden" name="user" value="{{session['user']['userId']}}"></input>
+                <button id="checkout_btn" type="submit" class="hidden bg-blue-300 rounded-3xl p-3">Checkout</button>
+            </form>
+        </div>
+        <table>
+            <tr>
+                <td colspan="4" class="w-full text-center">Your purchases</td>
+            </tr>
+            <tr>
+                <td>Purchase Id</td>
+                <td class="text-center">Food items</td>
+                <td>Total Price Breakdown</td>
+                <td>date</td>
+            </tr>
+            {%for purchase in purchases%}
+            <tr class="border">
+                <td class="w-1/3">{{purchase['purchaseId']}}</td>
+                <td class="flex w-[500px] px-10 justify-between">
+                    <div class="flex flex-col">
+                        {%for item in purchase['items']%}
+                        <p>{{item['foodName']}}</p>
+                        {%endfor%}
+                        
+                    </div>
+                    <div class="flex flex-col">
+                        {%for item in purchase['items']%}
+                        <p>{{item['quantity']}}</p>
+                        {%endfor%}
+                        
+                    </div>
+                    <div class="flex flex-col">
+                        {%for item in purchase['items']%}
+                        <p>{{item['foodPrice']}}</p>
+                        {%endfor%}
+                        
+                    </div>
+                    </td>
+                    <td>
+                    <div class="flex flex-col">
+                        {%for item in purchase['items']%}
+                            <p>{{item['quantity']*item['foodPrice']}}</p>
+                        {%endfor%}
+                        {%set ns = namespace(total=0) %}
+                        {%for item in purchase['items']%}
+                            {%set ns.total = ns.total + (item['quantity']*item['foodPrice'])%}
+                        {%endfor%}
+                        <p>Total: {{ns.total}}</p>
+                    </div>
+                    
+
+                </td>
+                <td class="w-1/3">{{purchase['purchaseDate']}}</td>
+            </tr>
+            {%endfor%}
+        </table>
+    </div>
+        <form action="/logout" method="post">
+            <button type="submit" class="bg-blue-300 rounded-3xl p-3">Logout</button>
+        </form>
+    </div>
+</body>
+</html>
+
+<script>
+    // function ConfirmDelete(button){
+    //     if(confirm("Are you sure you want to delete this food?")){
+    //         button.closest('form').submit()
+    //     }
+    // }
+    let cart = []
+    let qty = []
+    function AddToCart(foodId, foodName, foodPrice){
+        cart.push({foodId:foodId, foodName:foodName, foodPrice:foodPrice})
+        qty.push(1)
+        RenderCart()
+    }
+    function RemoveFromCart(foodId){
+        index = cart.findIndex((item) => item.foodId == foodId)
+        cart.splice(index, 1)
+        RenderCart()
+    }
+
+    function RenderCart(){
+        const t = document.getElementById('cart_table')
+        const checkout_btn = document.getElementById('checkout_btn')
+
+        t.innerHTML = ''
+
+        for (let i = 0; i < cart.length;i++){
+            const el = cart[i]
+            const row = document.createElement('tr')
+            row.innerHTML = `
+                <td>${el.foodName}</td>
+                <td>${el.foodPrice}</td>
+                <input name="quantity[]" value='${qty[i]}' onchange="qty[${i}] = this.value"></input>
+                <td><button onclick='RemoveFromCart(${el.foodId})'>Remove</button></td>
+
+                <input type="hidden" name = "foodId[]" value="${el.foodId}"></input>
+            `
+            t.appendChild(row)
+
+        }
+        checkout_btn.style.display = cart.length == 0 ? 'none':'block'
+    }
+</script>
