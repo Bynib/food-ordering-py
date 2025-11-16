@@ -63,24 +63,29 @@ def get_all_users():
         users = [dict(user) for user in users]
         return users
         
-def get_all_purchases():
+def get_all_user_purchases(userId):
     sql = '''
         select
             p.purchaseId,
             p.purchaseDate,
             pl.foodId,
-            pl.quantity
+            f.foodName,
+            pl.quantity,
+            f.foodPrice
         from purchase p
         left join purchase_list pl
         on p.purchaseId = pl.purchaseId
+        join food f
+        on f.foodId = pl.foodId
+        where p.userId = ?
         order by p.purchaseId
     '''
 
     with connect() as conn:
-        purchases = conn.execute(sql).fetchall()
+        db_purchases = conn.execute(sql, (userId,)).fetchall()
         
     purchases = {}
-    for purchase in purchases:
+    for purchase in db_purchases:
         pid = purchase['purchaseId']
         if pid not in purchases:
             purchases[pid] = {
@@ -91,6 +96,8 @@ def get_all_purchases():
         if purchase['foodId'] is not None:
             purchases[pid]['items'].append({
                 'foodId': purchase['foodId'],
+                'foodName': purchase['foodName'],
+                'foodPrice': purchase['foodPrice'],
                 'quantity': purchase['quantity']
             })
 
@@ -120,7 +127,7 @@ def add_user(username, password):
         conn.commit()
 
 def login(username, password):
-    sql = 'select username, isAdmin from user where username = ? and password = ?'
+    sql = 'select userId, username, isAdmin from user where username = ? and password = ?'
     with connect() as conn:
         user = conn.execute(sql,(username, password)).fetchone()
         return user
@@ -131,13 +138,29 @@ def add_purchase(userId):
     with connect() as conn:
         conn.execute(sql, (userId,))
         conn.commit()
+        return conn.execute('select last_insert_rowid()').fetchone()[0]
 
-def add_purchase_list(purchaseId, items):
+def add_purchase_list(purchaseId, foodId, quantity):
     sql = 'insert into purchase_list (purchaseId, foodId, quantity) values (?,?,?)'
+    print("items: ", foodId)
+
     with connect() as conn:
-        for item in items:
-            conn.execute(sql, (purchaseId, item.foodId, item.quantity))
-            conn.commit()
+        conn.execute(sql, (purchaseId, foodId, quantity))
+        conn.commit()
+
+def all_purchase():
+    sql = 'select * from purchase'
+    with connect() as conn:
+        purchase = conn.execute(sql).fetchall()
+        purchase = [dict(p) for p in purchase]
+        return purchase
+    
+def all_purchase_list():
+    sql = 'select * from purchase_list'
+    with connect() as conn:
+        purchase_list = conn.execute(sql).fetchall()
+        purchase_list = [dict(p) for p in purchase_list]
+        return purchase_list
 
 
 if __name__ == "__main__":
@@ -145,4 +168,7 @@ if __name__ == "__main__":
     # add_user('bynib', 'bynibshi')
     # print(dict(login('bynib', 'bynibshi')))
     # print(db_edit_food('Biryani', 100, 1))
-    print(get_all_foods())
+    # print(get_all_foods())
+    print(get_all_user_purchases(2))
+    # print("all purchase: ", all_purchase())
+    # print("all purchase list: ", all_purchase_list())
