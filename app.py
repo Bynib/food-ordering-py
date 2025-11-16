@@ -50,8 +50,8 @@ def login_route():
             return redirect(url_for('admin'))
         else:
             # return redirect(url_for('index'))
-            flash("You are not an admin.")
-            return redirect(url_for('login_route'))
+            # flash("You are not an admin.")
+            return redirect(url_for('customer'))
     else:
         flash("Invalid username or password.")
         return redirect(url_for('login_route'))
@@ -119,6 +119,36 @@ def delete_food():
         flash("Failed to delete food.")
 
     return redirect(url_for('admin'))
+
+@app.route('/customer', methods=['GET', 'POST'])
+def customer():
+    if request.method == 'GET':
+        foods = db.get_all_foods()
+        purchases = db.get_all_user_purchases(session['user']['userId'])
+        return render_template('customer-dashboard.html', foods=foods, purchases=purchases)
+
+@app.route('/add-purchase', methods=['GET', 'POST'])
+def add_purchase():
+    userId = session['user']['userId']
+    food_ids = request.form.getlist('foodId[]')
+    quantities = request.form.getlist('quantity[]')
+    print('user: ', session['user'])
+    print('cart: ', food_ids)
+    purchase_id = db.add_purchase(userId)
+    if purchase_id:
+        for food_id in food_ids:
+            if db.add_purchase_list(purchase_id, food_id, quantities[food_ids.index(food_id)]):
+                flash('Purchase added')
+                return redirect(url_for('customer'))
+    return redirect(url_for('customer'))
+    # userId = session['user']['userId']
+    # print(userId)
+    # if db.add_purchase(userId, cart):
+    #     flash("Purchase added successfully.")
+    #     return redirect(url_for('customer'))
+    # else:
+    #     flash("Failed to add purchase.")
+    #     return redirect(url_for('customer'))
 
 if __name__ == "__main__":
     app.run(debug=True)
